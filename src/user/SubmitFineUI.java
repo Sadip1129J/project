@@ -19,18 +19,27 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SubmitFineUI extends Application {
-    private int userId; // Add userId field
+    private int userId; // Store userId
 
-    // Constructor to accept userId
+    // Proper no-argument constructor (required for JavaFX)
+    public SubmitFineUI() {
+    }
+
+    // Constructor with userId parameter
     public SubmitFineUI(int userId) {
+        this.userId = userId;
+    }
+
+    // Setter method to set userId
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Submit Fine");
+        primaryStage.setTitle("Submit Fine Payment");
 
-        // Labels and TextFields
+        // Labels and TextFields for fine submission
         Label fineIdLabel = new Label("Enter Fine ID:");
         TextField fineIdField = new TextField();
 
@@ -39,16 +48,23 @@ public class SubmitFineUI extends Application {
 
         Label violationLabel = new Label("Violation:");
         TextField violationField = new TextField();
-
-        Label issueDateLabel = new Label("Issue Date (YYYY-MM-DD):");
+        
+        Label issueDateLabel = new Label("Payment Date (YYYY-MM-DD):");
         TextField issueDateField = new TextField();
 
-        Label statusLabel = new Label("Status:");
-        TextField statusField = new TextField();
+        // Note: Status field removed
 
-        // QR Code Image (Replace with actual QR image URL if needed)
-        Image qrImage = new Image("https://via.placeholder.com/100"); // Placeholder QR
-        ImageView qrImageView = new ImageView(qrImage);
+        // QR Code Image - Load from resources
+        ImageView qrImageView;
+        try {
+            // Load image from resources
+            Image qrImage = new Image(getClass().getResourceAsStream("qr.png"));
+            qrImageView = new ImageView(qrImage);
+        } catch (Exception e) {
+            System.err.println("Error loading QR image: " + e.getMessage());
+            // Fallback to placeholder if image not found
+            qrImageView = new ImageView(new Image("https://via.placeholder.com/100"));
+        }
         qrImageView.setFitWidth(120);
         qrImageView.setFitHeight(120);
 
@@ -58,33 +74,43 @@ public class SubmitFineUI extends Application {
         Button submitButton = new Button("Submit");
         Button returnButton = new Button("Return");
 
-        returnButton.setOnAction(e -> primaryStage.close());
+        returnButton.setOnAction(e -> {
+            primaryStage.close(); // Close the current window
 
-        // Submit Button Action
+            // Open UserScreen with userId
+            UserScreen userDashboard = new UserScreen(userId); // Pass the userId
+            Stage userStage = new Stage();
+            try {
+                userDashboard.start(userStage);
+            } catch (Exception ex) {
+                System.err.println("Error opening UserScreen: " + ex.getMessage());
+            }
+        });
+
+        // Submit Button Action: Insert payment record into payments table
         submitButton.setOnAction(e -> {
             try {
                 // Get input values
                 int fineId = Integer.parseInt(fineIdField.getText());
                 double amount = Double.parseDouble(amountField.getText());
-                String violation = violationField.getText();
-                String issueDate = issueDateField.getText();
-                String status = statusField.getText();
+                // Although violation is collected, it is not used in payment insertion.
+                String violation = violationField.getText();  
+                String paymentDate = issueDateField.getText();  // Using issueDateField as payment_date
 
-                // Insert data into the database
-                insertFineIntoDatabase(fineId, userId, amount, violation, issueDate, status);
+                // Insert payment data into the payments table
+                insertPaymentIntoDatabase(fineId, paymentDate, amount);
 
                 // Clear fields after submission
                 fineIdField.clear();
                 amountField.clear();
                 violationField.clear();
                 issueDateField.clear();
-                statusField.clear();
 
-                System.out.println("Fine submitted successfully!");
+                System.out.println("Payment submitted successfully!");
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid input. Please enter valid numbers for Fine ID and Amount.");
             } catch (SQLException ex) {
-                System.out.println("Error inserting fine into the database: " + ex.getMessage());
+                System.out.println("Error inserting payment into the database: " + ex.getMessage());
             }
         });
 
@@ -102,8 +128,7 @@ public class SubmitFineUI extends Application {
         formLayout.add(violationField, 1, 2);
         formLayout.add(issueDateLabel, 0, 3);
         formLayout.add(issueDateField, 1, 3);
-        formLayout.add(statusLabel, 0, 4);
-        formLayout.add(statusField, 1, 4);
+        // Status field removed
 
         // QR Code and buttons layout
         VBox qrBox = new VBox(5, qrImageView, sewaLabel, submitButton, returnButton);
@@ -120,26 +145,23 @@ public class SubmitFineUI extends Application {
         primaryStage.show();
     }
 
-    // Method to insert fine data into the database
-    private void insertFineIntoDatabase(int fineId, int userId, double amount, String violation, String issueDate, String status) throws SQLException {
-        // Database connection details
-        String url = "jdbc:mysql://localhost:3306/traffic_fines"; // Replace with your database name
-        String username = "root"; // Replace with your MySQL username
-        String password = "Sadip123@"; // Replace with your MySQL password
+    // Method to insert payment data into the payments table
+    private void insertPaymentIntoDatabase(int fineId, String paymentDate, double amount) throws SQLException {
+        // Database connection details (make sure the database name is correct)
+        String url = "jdbc:mysql://localhost:3306/traffic_fine";
+        String username = "root";
+        String password = "Sadip123@";
 
-        // SQL query to insert data
-        String query = "INSERT INTO fines (fine_id, user_id, amount, violation, issue_date, status) VALUES (?, ?, ?, ?, ?, ?)";
+        // SQL query to insert data into payments table
+        String query = "INSERT INTO payments(fine_id, payment_date, amount) VALUES (?, ?, ?)";
 
         try (Connection connection = DriverManager.getConnection(url, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             // Set parameters for the query
             preparedStatement.setInt(1, fineId);
-            preparedStatement.setInt(2, userId);
+            preparedStatement.setDate(2, java.sql.Date.valueOf(paymentDate));
             preparedStatement.setDouble(3, amount);
-            preparedStatement.setString(4, violation);
-            preparedStatement.setString(5, issueDate);
-            preparedStatement.setString(6, status);
 
             // Execute the query
             preparedStatement.executeUpdate();

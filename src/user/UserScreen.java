@@ -13,15 +13,20 @@ import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
 public class UserScreen extends Application {
-    private int user_id; // Store user_id
+    private static int user_id; // Store user_id as a static variable
 
-    // Constructor to accept user_id
-    public UserScreen(int user_id) {
-        this.user_id = user_id;
+    public UserScreen(int userId) {
+        user_id = userId;
     }
 
     @Override
     public void start(Stage primaryStage) {
+        if (user_id == 0) {
+            System.out.println("Error: User ID not set. Redirecting to login.");
+            new LoginScreen().start(primaryStage);
+            return;
+        }
+
         // Display the user_id on the screen
         Label welcomeLabel = new Label("Welcome, User ID: " + user_id);
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-padding: 10px; -fx-background-color: lightgray;");
@@ -35,10 +40,10 @@ public class UserScreen extends Application {
         powerIcon.setOnMouseClicked(e -> logout(primaryStage));
 
         // Open ViewFines page with user_id
-        viewFinesButton.setOnAction(e -> openViewFinesPage(user_id));
+        viewFinesButton.setOnAction(e -> openViewFinesPage());
 
         // Open SubmitFine page with user_id
-        submitFineButton.setOnAction(e -> openSubmitFinePage(user_id));
+        submitFineButton.setOnAction(e -> openSubmitFinePage());
 
         logoutButton.setOnAction(e -> logout(primaryStage));
 
@@ -54,36 +59,31 @@ public class UserScreen extends Application {
         root.setStyle("-fx-padding: 20px;");
 
         Scene scene = new Scene(root, 600, 400);
-        primaryStage.setTitle("User Screen");
+        primaryStage.setTitle("User Dashboard");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private void openViewFinesPage(int userId) {
-        // Open ViewFine with user_id
-        ViewFine viewFine = new ViewFine(userId);
+    private void openViewFinesPage() {
+        ViewFine viewFine = new ViewFine(user_id);
         Stage viewFineStage = new Stage();
         viewFine.start(viewFineStage);
     }
 
-    private void openSubmitFinePage(int userId) {
-        // Open SubmitFineUI with user_id
-        SubmitFineUI submitFineUI = new SubmitFineUI(userId);
+    private void openSubmitFinePage() {
+        SubmitFineUI submitFineUI = new SubmitFineUI(user_id);
         Stage submitFineStage = new Stage();
         submitFineUI.start(submitFineStage);
     }
 
     private void logout(Stage stage) {
-        // Close the current stage (UserScreen)
-        stage.close();
+        stage.close(); // Close the current UserScreen
 
-        // Open the LoginScreen
-        LoginScreen loginScreen = new LoginScreen();
-        Stage loginStage = new Stage();
-        loginScreen.start(loginStage);
+        // Open the LoginScreen without creating a new stage
+        new LoginScreen().start(stage);
     }
 
-    public void showDashboard() {
-        start(new Stage());
+    public static void setUserId(int userId) {
+        user_id = userId;
     }
 }

@@ -52,7 +52,7 @@ public class ViewIssuedFinesScreen extends Stage {
         fineTable.setItems(fetchFinesFromDatabase());
 
         // Buttons
-        Button makePaymentButton = new Button("Make Payment");
+        Button makePaymentButton = new Button("Change Payment Status");
         makePaymentButton.setOnAction(e -> handleMakePayment());
 
         Button refreshButton = new Button("Refresh");

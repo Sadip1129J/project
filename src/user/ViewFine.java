@@ -66,7 +66,7 @@ public class ViewFine extends Application {
         ObservableList<Fine> fines = FXCollections.observableArrayList();
 
         // Database connection details
-        String url = "jdbc:mysql://localhost:3306/traffic_fines"; // Replace with your database name
+        String url = "jdbc:mysql://localhost:3306/traffic_fine"; // Replace with your database name
         String username = "root"; // Replace with your MySQL username
         String password = "Sadip123@"; // Replace with your MySQL password
 
